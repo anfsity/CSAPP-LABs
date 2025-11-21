@@ -1,0 +1,59 @@
+	.pos 0
+	irmovq	stack,%rsp
+	call main
+	halt
+
+	.align 8
+array:
+	.quad 0xbca
+	.quad 0xcba
+	.quad 0xacb
+	.quad 0xcab
+	.quad 0xabc
+	.quad 0xbac
+	
+################################################################################
+# You may want to modify this portion
+
+bubble_a:
+	rrmovq %rdi, %rdx
+	addq %rsi, %rdx # last = data + count - 1
+loop1:
+# rcx <- i, rdx <- last	
+	rrmovq %rdi, %rcx
+loop2:
+	# if a[i] > a[i + 1]
+	mrmovq 8(%rcx), %r8 # *(i + 1)
+	mrmovq (%rcx), %r9 # *i
+	subq %r8, %r9 # *i <= *(i + 1)
+	jle continue 
+
+swap:
+	mrmovq 8(%rcx), %r8 # t = *(i + 1)
+	mrmovq (%rcx), %r9 
+	rmmovq %r9, 8(%rcx) # *(i + 1) = *i
+	rmmovq %r8, (%rcx) # *i = t
+continue:
+	# i++
+	irmovq $8, %r8
+	addq %r8, %rcx
+	# compare i, last
+	rrmovq %rdx, %r8
+	subq %rcx, %r8 # last - i > 0
+	jg loop2
+
+	irmovq $8, %r8
+	subq %r8, %rdx # last --
+	rrmovq %rdx, %rcx 
+	subq %rdi, %rcx # last - data > 0
+	jg loop1 # if last > data jump
+	ret
+
+main:
+	irmovq array, %rdi
+	irmovq $40, %rsi
+	call bubble_a
+	ret
+
+	.pos 0x200
+stack:
